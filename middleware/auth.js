@@ -1,21 +1,18 @@
-const jwt = require('jsonwebtoken'); // Ensure you have the jwt library installed
-const { JWT_SECRET } = process.env;
+const jwt = require('jsonwebtoken');
 
 module.exports.ensureAuthenticated = (req, res, next) => {
-    const token = req.headers['authorization'];
+    const token = req.headers['authorization']?.split(' ')[1]; // Extract token from Authorization header
 
     if (!token) {
-        req.flash('error_msg', 'Please log in to view this resource');
-        return res.redirect('/login');
+        return res.status(401).json({ error_msg: 'No token provided' });
     }
 
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (err) {
-            req.flash('error_msg', 'Invalid or expired token');
-            return res.redirect('/login');
+            return res.status(401).json({ error_msg: 'Invalid token' });
         }
 
-        req.user = decoded; // Attach decoded user data to request
+        req.user = decoded; // Attach user info to request object
         next();
     });
 };

@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const db = require('../config/db');
 const jwt = require('jsonwebtoken'); // Ensure you have the jwt library installed
 const { JWT_SECRET } = process.env;
+const { ensureAuthenticated } = require('../middleware/auth');
 const flash = require('connect-flash');
 
 // Use connect-flash for flash messages

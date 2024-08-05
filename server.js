@@ -1,16 +1,20 @@
 const express = require('express');
 const path = require('path');
+const flash = require('connect-flash');
 const passport = require('passport');
+const jwt = require('jsonwebtoken');
 const db = require('./config/db');
 require('./config/passport');
 require('dotenv').config();
-const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Initialize passport middleware
+// Initialize passport and flash middleware
 app.use(passport.initialize());
+
+// Flash messages middleware
+app.use(flash());
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -18,12 +22,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Route for home page
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'home.html'));
+// Middleware to set flash messages in response locals
+app.use((req, res, next) => {
+    res.locals.success_msg = req.flash('success_msg');
+    res.locals.error_msg = req.flash('error_msg');
+    next();
 });
 
-// Registering routes
+// Define routes
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const jobRoutes = require('./routes/jobs');
@@ -49,24 +55,15 @@ app.get('/login', (req, res) => {
     res.render('login');
 });
 
-// Profile route - Update to use token-based authentication
+// Profile route
 app.get('/profile', async (req, res) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    
-    if (!token) {
-        res.redirect('/login');
-        return;
-    }
-
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const jobsSql = 'SELECT * FROM jobs';
-        const result = await db.query(jobsSql);
-        res.render('profile', { user: decoded, jobs: result.rows });
+        const jobsResult = await db.query(jobsSql);
+        res.render('profile', { jobs: jobsResult.rows });
     } catch (err) {
-        console.error('Token verification error:', err);
-        res.redirect('/login');
+        console.error('Error fetching jobs:', err);
+        res.redirect('/?error_msg=Error+fetching+jobs');
     }
 });
 
@@ -74,12 +71,18 @@ app.get('/profile', async (req, res) => {
 app.get('/jobs', async (req, res) => {
     try {
         const sql = 'SELECT * FROM jobs';
-        const result = await db.query(sql);
-        res.render('jobs', { jobs: result.rows });
+        const jobsResult = await db.query(sql);
+        res.render('jobs', { jobs: jobsResult.rows });
     } catch (err) {
         console.error('Error fetching jobs:', err);
-        res.redirect('/');
+        res.redirect('/?error_msg=Error+fetching+jobs');
     }
+});
+
+// API endpoint to check login status
+app.get('/api/check-login', (req, res) => {
+    // Update logic based on JWT or other authentication mechanism
+    res.json({ loggedIn: false });
 });
 
 // Admin dashboard route
