@@ -3,7 +3,7 @@ const path = require('path');
 const session = require('express-session');
 const flash = require('connect-flash');
 const passport = require('passport'); 
-const client = require('./config/db');
+const db = require('./config/db');
 require('./config/passport');
 require('dotenv').config();
 
