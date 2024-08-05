@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
 const flash = require('connect-flash');
 const passport = require('passport'); 
 const db = require('./config/db');
@@ -10,6 +11,19 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Session middleware configuration
+app.use(session({
+    store: new pgSession({
+        pgPromise: db
+    }),
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 24 // 1 day
+    }
+}));
 
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
