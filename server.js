@@ -8,14 +8,14 @@ const db = require('./config/db');
 require('./config/passport');
 require('dotenv').config();
 
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Session middleware configuration
 app.use(session({
     store: new pgSession({
-        pgPromise: db
+        pool: db.$pool, // Use the pg-promise pool
+        tableName: 'session' // Table name where sessions are stored
     }),
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -25,23 +25,13 @@ app.use(session({
     }
 }));
 
-const authRoutes = require('./routes/auth');
-const adminRoutes = require('./routes/admin');
-const jobRoutes = require('./routes/jobs');
-const userRoutes = require('./routes/user');
-
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-}));
 app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(flash());
+
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -59,68 +49,68 @@ app.get('/', (req, res) => {
 });
 
 // Registering routes
+const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
+const jobRoutes = require('./routes/jobs');
+const userRoutes = require('./routes/user');
+
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
-app.use('/', jobRoutes); // Using job routes for root endpoints like '/apply-job/:id'
+app.use('/jobs', jobRoutes); // Updated route for jobs
 app.use('/user', userRoutes);
 
-// Removing redundant routes for home rendering
-// app.get('/home', (req, res) => {
-//     res.render('home');
-// });
-
+// Admin login route
 app.get('/admin-login', (req, res) => {
     res.render('admin-login');
 });
 
+// Register route
 app.get('/register', (req, res) => {
     res.render('register');
 });
 
+// Login route
 app.get('/login', (req, res) => {
     res.render('login');
 });
 
-// Removed duplicate /profile route, keeping only one version
+// Profile route
 app.get('/profile', (req, res) => {
     if (!req.session.user) {
         return res.redirect('/login');
     }
 
     const jobsSql = 'SELECT * FROM jobs';
-    db.query(jobsSql, (err, jobs) => {
-        if (err) {
+    db.query(jobsSql)
+        .then(result => {
+            res.render('profile', { user: req.session.user, jobs: result.rows });
+        })
+        .catch(err => {
             req.flash('error_msg', 'Error fetching jobs');
-            return res.redirect('/profile');
-        }
-
-        res.render('profile', { user: req.session.user, jobs });
-    });
+            res.redirect('/profile');
+        });
 });
 
-// Fetching jobs and rendering jobs page
+// View jobs route
 app.get('/jobs', (req, res) => {
     const sql = 'SELECT * FROM jobs';
-    db.query(sql, (err, results) => {
-        if (err) {
+    db.query(sql)
+        .then(result => {
+            res.render('jobs', { jobs: result.rows });
+        })
+        .catch(err => {
             req.flash('error_msg', 'Error fetching jobs');
-            return res.redirect('/');
-        }
-        res.render('jobs', { jobs: results });
-    });
+            res.redirect('/');
+        });
 });
 
-// Endpoint to check if the user is logged in
+// API endpoint to check login status
 app.get('/api/check-login', (req, res) => {
     if (req.session.user) {
         res.json({ loggedIn: true, username: req.session.user.username });
     } else {
         res.json({ loggedIn: false });
     }
-});
-
-app.get('/admin-login', (req, res) => {
-    res.render('admin-login');
 });
 
 // Admin dashboard route
@@ -132,9 +122,9 @@ app.get('/admin-dashboard', (req, res) => {
 });
 
 // Optional: Catch-all route for 404 errors
-// app.use((req, res, next) => {
-//     res.status(404).send('404 Not Found');
-// });
+app.use((req, res) => {
+    res.status(404).send('404 Not Found');
+});
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
