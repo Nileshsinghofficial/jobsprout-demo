@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Register</h1>
+        <% if (error_msg) { %>
+            <div class="alert error"><%= error_msg %></div>
+        <% } %>
+        <% if (success_msg) { %>
+            <div class="alert success"><%= success_msg %></div>
+        <% } %>
+        <form action="/auth/register" method="POST">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <input type="password" name="confirmPassword" placeholder="Confirm Password" required>
+            <label>
+                <input type="checkbox" name="checkbox"> Agree to terms and conditions
+            </label>
+            <button type="submit">Register</button>
+        </form>
+    </div>
+</body>
+</html>

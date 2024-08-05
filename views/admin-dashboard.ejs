@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/css/style-admindash.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        <a href="/admin/logout">Logout</a>
+
+        <!-- Display all jobs -->
+        <h2>All Jobs</h2>
+        <div class="jobs-list">
+            <ul>
+                <% jobs.forEach(job => { %>
+                    <li>
+                        <h3><%= job.title %></h3>
+                        <p><%= job.description %></p>
+                        <p>Author: <%= job.author %></p>
+                        <form action="/admin/edit-job/<%= job.id %>" method="GET">
+                            <button type="submit">Edit</button>
+                        </form>
+                        <form action="/admin/delete-job/<%= job.id %>" method="POST">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </li>
+                <% }) %>
+            </ul>
+        </div>
+        
+        <!-- Add Job Form -->
+        <h2>Add Job</h2>
+        <form action="/admin/add-job" method="POST">
+            <input type="text" name="title" placeholder="Job Title" required>
+            <textarea name="description" placeholder="Job Description" required></textarea>
+            <input type="text" name="author" placeholder="Job Author" required>
+            <button type="submit">Add Job</button>
+        </form>
+    </div>
+</body>
+</html>

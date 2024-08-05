@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Applied Jobs</title>
+    <link rel="stylesheet" href="/css/style2.css">
+</head>
+<body>
+    <header>
+        <h1>Applied Jobs</h1>
+        <button onclick="history.back()">Back</button>
+    </header>
+
+    <main>
+        <% if (jobs.length > 0) { %>
+            <ul>
+                <% jobs.forEach(job => { %>
+                    <li>
+                        <h3><%= job.title %></h3>
+                        <p><%= job.description %></p>
+                        <p><%= job.author %></p>
+                    </li>
+                <% }) %>
+            </ul>
+        <% } else { %>
+            <p>You have not applied for any jobs yet.</p>
+        <% } %>
+    </main>
+</body>
+</html>

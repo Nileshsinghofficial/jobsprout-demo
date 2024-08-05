@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link rel="stylesheet" href="/css/style2.css">
+</head>
+<body>
+    <header>
+        <h1>Welcome, <%= user.username %></h1>
+        <form action="/auth/logout" method="POST">
+            <button type="submit">Logout</button>
+        </form>
+        <br>
+        <!-- Back button -->
+        <button onclick="history.back()">Back</button>
+    </header>
+    
+    <% if (success_msg) { %>
+        <div class="alert success"><%= success_msg %></div>
+    <% } %>
+    <% if (error_msg) { %>
+        <div class="alert error"><%= error_msg %></div>
+    <% } %>
+
+    <main>
+        <h2>Available Jobs</h2>
+        <% if (jobs.length > 0) { %>
+            <ul>
+                <% jobs.forEach(job => { %>
+                    <li>
+                        <h3><%= job.title %></h3>
+                        <p><%= job.description %></p>
+                        <p>Author: <%= job.author %></p>
+                        <form action="/apply-job/<%= job.id %>" method="POST">
+                            <button type="submit">Apply</button>
+                        </form>
+                    </li>
+                <% }) %>
+            </ul>
+        <% } else { %>
+            <p>No jobs available at the moment.</p>
+        <% } %>
+    </main>
+
+    <footer>
+        <a href="/applied-jobs"><button>View Applied Jobs</button></a>
+    </footer>
+</body>
+</html>
