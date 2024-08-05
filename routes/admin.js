@@ -2,18 +2,10 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
-const { ensureAuthenticated } = require('../middleware/auth');
 const flash = require('connect-flash');
-const session = require('express-session');
 
 // Use connect-flash for flash messages
 router.use(flash());
-router.use(session({
-    secret: 'your-secret-key', // Change this to a secure key
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: true } // Set `secure: true` in production with HTTPS
-}));
 
 // Route to render admin registration page
 router.get('/admin-register', (req, res) => {
@@ -74,7 +66,8 @@ router.post('/admin-login', async (req, res) => {
             return res.redirect('/admin/admin-login');
         }
 
-        req.session.admin = admin;
+        // Session logic removed, admin login state not stored
+        req.flash('success_msg', 'Logged in successfully');
         res.redirect('/admin/dashboard');
     } catch (err) {
         console.error('Login error:', err);
@@ -84,7 +77,7 @@ router.post('/admin-login', async (req, res) => {
 });
 
 // Admin dashboard route
-router.get('/dashboard',   async (req, res) => {
+router.get('/dashboard', async (req, res) => {
     try {
         const sql = 'SELECT * FROM jobs';
         const result = await db.query(sql);
@@ -97,7 +90,7 @@ router.get('/dashboard',   async (req, res) => {
 });
 
 // Add Job route
-router.post('/add-job',   async (req, res) => {
+router.post('/add-job', async (req, res) => {
     const { title, description, author } = req.body;
     try {
         const sql = 'INSERT INTO jobs (title, description, author) VALUES ($1, $2, $3)';
@@ -130,7 +123,7 @@ router.get('/edit-job/:id', async (req, res) => {
     }
 });
 
-router.post('/edit-job/:id',  async (req, res) => {
+router.post('/edit-job/:id', async (req, res) => {
     const jobId = req.params.id;
     const { title, description, author } = req.body;
     try {
@@ -150,7 +143,7 @@ router.post('/edit-job/:id',  async (req, res) => {
 });
 
 // Delete Job route
-router.post('/delete-job/:id', ensureAuthenticated, async (req, res) => {
+router.post('/delete-job/:id', async (req, res) => {
     const jobId = req.params.id;
     try {
         const sql = 'DELETE FROM jobs WHERE id = $1';
@@ -170,13 +163,9 @@ router.post('/delete-job/:id', ensureAuthenticated, async (req, res) => {
 
 // Admin logout route
 router.get('/logout', (req, res) => {
-    req.session.destroy(err => {
-        if (err) {
-            req.flash('error_msg', 'Error logging out');
-            return res.redirect('/admin/dashboard');
-        }
-        res.redirect('/');
-    });
+    // Session logic removed
+    req.flash('success_msg', 'Logged out successfully');
+    res.redirect('/');
 });
 
 module.exports = router;

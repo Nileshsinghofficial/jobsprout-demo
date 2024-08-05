@@ -2,31 +2,29 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const db = require('./db');
 
-passport.use(new LocalStrategy(
-    function(username, password, done) {
-        const sql = 'SELECT * FROM users WHERE username = ?';
-        db.query(sql, [username], (err, results) => {
-            if (err) return done(err);
-            if (results.length === 0) return done(null, false);
-            const user = results[0];
-            // Assuming you are using bcrypt for password hashing
-            bcrypt.compare(password, user.password, (err, isMatch) => {
-                if (err) return done(err);
-                if (isMatch) return done(null, user);
-                else return done(null, false);
-            });
-        });
-    }
-));
+// Configure Passport.js
+passport.use(new LocalStrategy({
+    usernameField: 'username',
+    passwordField: 'password'
+}, (username, password, done) => {
+    // Fetch user from database
+    db.query('SELECT * FROM users WHERE username = $1', [username])
+        .then(result => {
+            const user = result.rows[0];
+            if (!user || !user.password === password) {
+                return done(null, false, { message: 'Incorrect username or password.' });
+            }
+            return done(null, user);
+        })
+        .catch(err => done(err));
+}));
 
-passport.serializeUser(function(user, done) {
+passport.serializeUser((user, done) => {
     done(null, user.id);
 });
 
-passport.deserializeUser(function(id, done) {
-    const sql = 'SELECT * FROM users WHERE id = ?';
-    db.query(sql, [id], (err, results) => {
-        if (err) return done(err);
-        done(null, results[0]);
-    });
+passport.deserializeUser((id, done) => {
+    db.query('SELECT * FROM users WHERE id = $1', [id])
+        .then(result => done(null, result.rows[0]))
+        .catch(err => done(err));
 });

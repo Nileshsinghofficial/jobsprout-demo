@@ -2,18 +2,12 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const db = require('../config/db');
-const { ensureAuthenticated } = require('../middleware/auth');
+const jwt = require('jsonwebtoken'); // Ensure you have the jwt library installed
+const { JWT_SECRET } = process.env;
 const flash = require('connect-flash');
-const session = require('express-session');
 
 // Use connect-flash for flash messages
 router.use(flash());
-router.use(session({
-    secret: 'your-secret-key', // Change this to a secure key
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false } // Set `secure: true` in production with HTTPS
-}));
 
 // Route to render register page
 router.get('/register', (req, res) => {
@@ -55,8 +49,6 @@ router.post('/register', async (req, res) => {
 
 // Route to render login page
 router.get('/login', (req, res) => {
-    // Store the referrer URL in the session
-    req.session.returnTo = req.headers.referer || '/';
     res.render('login');
 });
 
@@ -81,10 +73,9 @@ router.post('/login', async (req, res) => {
             return res.redirect('/login');
         }
 
-        req.session.user = user;
-        const returnTo = req.session.returnTo || '/';
-        delete req.session.returnTo; // Clear the returnTo session variable
-        res.redirect(returnTo);
+        // Generate a token
+        const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+        res.json({ token }); // Send token to client
     } catch (err) {
         console.error('Login error:', err);
         req.flash('error_msg', 'An error occurred during login');
@@ -92,8 +83,15 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// Logout route
+router.post('/logout', (req, res) => {
+    // For token-based systems, logout is handled on the client-side (remove token)
+    req.flash('success_msg', 'Logged out successfully');
+    res.redirect('/login');
+});
+
 // Route to render profile page
-router.get('/profile', ensureAuthenticated, async (req, res) => {
+router.get('/profile', async (req, res) => {
     try {
         const jobsSql = 'SELECT * FROM jobs';
         const jobsResult = await db.query(jobsSql);
@@ -110,7 +108,7 @@ router.post('/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {
             req.flash('error_msg', 'Error logging out');
-            return res.redirect('/login'); // Redirect to profile or another route
+            return res.redirect('/login'); // Redirect to login page on error
         }
         res.redirect('/'); // Redirect to home or login page
     });

@@ -6,7 +6,7 @@ const { ensureAuthenticated } = require('../middleware/auth');
 // Route to handle job applications
 router.post('/apply-job/:id', ensureAuthenticated, async (req, res) => {
     const jobId = req.params.id;
-    const userId = req.session.user.id;  
+    const userId = req.user.id;  
 
     try {
         const sql = 'INSERT INTO applications (job_id, user_id) VALUES ($1, $2)';
@@ -22,12 +22,12 @@ router.post('/apply-job/:id', ensureAuthenticated, async (req, res) => {
 
 // Profile page route
 router.get('/profile', ensureAuthenticated, async (req, res) => {
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
     try {
         const jobsSql = 'SELECT * FROM jobs';
         const jobsResult = await db.query(jobsSql);
-        res.render('profile', { user: req.session.user, jobs: jobsResult.rows });
+        res.render('profile', { user: req.user, jobs: jobsResult.rows });
     } catch (err) {
         console.error('Error fetching jobs:', err);
         req.flash('error_msg', 'Error fetching jobs');
@@ -37,7 +37,7 @@ router.get('/profile', ensureAuthenticated, async (req, res) => {
 
 // View applied jobs
 router.get('/applied-jobs', ensureAuthenticated, async (req, res) => {
-    const userId = req.session.user.id;
+    const userId = req.user.id;
 
     try {
         const sql = `
