@@ -1,5 +1,6 @@
 const { Client } = require('pg');
 const bcrypt = require('bcrypt');
+require('dotenv').config();
 
 const client = new Client({
     host: process.env.PG_HOST,
