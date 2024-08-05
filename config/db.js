@@ -1,5 +1,4 @@
 const pgp = require('pg-promise')();
-const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const dbConfig = {
@@ -14,7 +13,7 @@ const db = pgp(dbConfig);
 
 db.connect()
     .then(obj => {
-        obj.done();
+        obj.done(); // success, release the connection;
         console.log('Connected to the PostgreSQL server.');
     })
     .catch(error => {
