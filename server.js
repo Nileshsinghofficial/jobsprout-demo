@@ -30,6 +30,12 @@ app.use('/admin', adminRoutes);
 app.use('/jobs', jobRoutes);
 app.use('/user', userRoutes);
 
+// Serve home.html from the public folder
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'home.html'));
+});
+
+
 // Admin login route
 app.get('/admin-login', (req, res) => {
     res.render('admin-login');
