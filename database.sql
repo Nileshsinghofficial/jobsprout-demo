@@ -44,12 +44,23 @@ CREATE TABLE "applications" (
   "job_id" INTEGER NOT NULL,
   "user_id" INTEGER NOT NULL,
   PRIMARY KEY ("id"),
-  UNIQUE ("job_id"),
+  UNIQUE ("job_id", "user_id"),
   FOREIGN KEY ("job_id") REFERENCES "jobs" ("id") ON UPDATE RESTRICT ON DELETE CASCADE,
   FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON UPDATE RESTRICT ON DELETE CASCADE
 );
 
 CREATE INDEX "applications_user_id" ON "applications" ("user_id");
+
+--
+-- Table structure for table `session`
+--
+
+CREATE TABLE "session" (
+  "sid" VARCHAR NOT NULL,
+  "sess" JSON NOT NULL,
+  "expire" TIMESTAMP(6) NOT NULL,
+  PRIMARY KEY ("sid")
+);
 
 --
 -- Dumping data for table `admins`
