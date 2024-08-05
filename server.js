@@ -76,10 +76,10 @@ app.get('/jobs', async (req, res) => {
 });
 
 // API endpoint to check login status
-app.get('/api/check-login', (req, res) => {
-    // Update logic based on JWT or other authentication mechanism
-    res.json({ loggedIn: false });
-});
+// app.get('/api/check-login', (req, res) => {
+//     // Update logic based on JWT or other authentication mechanism
+//     res.json({ loggedIn: false });
+// });
 
 // Admin dashboard route
 app.get('/admin-dashboard', (req, res) => {
