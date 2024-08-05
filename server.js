@@ -1,7 +1,5 @@
 const express = require('express');
 const path = require('path');
-const session = require('express-session');
-const pgSession = require('connect-pg-simple')(session);
 const flash = require('connect-flash');
 const passport = require('passport'); 
 const db = require('./config/db');
@@ -11,20 +9,7 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Session middleware configuration
-app.use(session({
-    store: new pgSession({
-        pool: db.$pool, // Use the pg-promise pool
-        tableName: 'session' // Table name where sessions are stored
-    }),
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        maxAge: 1000 * 60 * 60 * 24 // 1 day
-    }
-}));
-
+// Initialize passport and flash middleware
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -36,11 +21,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Middleware to set flash messages in response locals
 app.use((req, res, next) => {
     res.locals.success_msg = req.flash('success_msg');
     res.locals.error_msg = req.flash('error_msg');
-    res.locals.user = req.session.user || null;
-    res.locals.admin = req.session.admin || null;
     next();
 });
 
@@ -56,7 +40,7 @@ const userRoutes = require('./routes/user');
 
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
-app.use('/jobs', jobRoutes); // Updated route for jobs
+app.use('/jobs', jobRoutes);
 app.use('/user', userRoutes);
 
 // Admin login route
@@ -76,14 +60,10 @@ app.get('/login', (req, res) => {
 
 // Profile route
 app.get('/profile', (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login');
-    }
-
     const jobsSql = 'SELECT * FROM jobs';
     db.query(jobsSql)
         .then(result => {
-            res.render('profile', { user: req.session.user, jobs: result.rows });
+            res.render('profile', { jobs: result.rows });
         })
         .catch(err => {
             req.flash('error_msg', 'Error fetching jobs');
@@ -106,18 +86,12 @@ app.get('/jobs', (req, res) => {
 
 // API endpoint to check login status
 app.get('/api/check-login', (req, res) => {
-    if (req.session.user) {
-        res.json({ loggedIn: true, username: req.session.user.username });
-    } else {
-        res.json({ loggedIn: false });
-    }
+    // Since session management is removed, this is not needed
+    res.json({ loggedIn: false });
 });
 
 // Admin dashboard route
 app.get('/admin-dashboard', (req, res) => {
-    if (!req.session.admin) {
-        return res.redirect('/admin-login');
-    }
     res.render('admin-dashboard');
 });
 
