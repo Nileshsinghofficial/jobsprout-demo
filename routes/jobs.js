@@ -3,20 +3,28 @@ const router = express.Router();
 const db = require('../config/db');
 const { ensureAuthenticated } = require('../middleware/auth');
 
-// Apply for job
+// Apply for job route
 router.post('/apply-job/:id', ensureAuthenticated, async (req, res) => {
     const jobId = req.params.id;
-    const userId = req.user.id; // Get user ID from token
+    const userId = req.session.user.id;
 
     try {
+        // Check if the user has already applied for the job
+        const checkApplicationSql = 'SELECT * FROM applications WHERE job_id = $1 AND user_id = $2';
+        const checkResult = await db.query(checkApplicationSql, [jobId, userId]);
+
+        if (checkResult.rows.length > 0) {
+            return res.redirect('/profile?error_msg=You+have+already+applied+for+this+job.');
+        }
+
+        // Insert new application
         const sql = 'INSERT INTO applications (job_id, user_id) VALUES ($1, $2)';
         await db.query(sql, [jobId, userId]);
-        req.flash('success_msg', 'Job application submitted successfully');
-        res.redirect('/profile');
+
+        res.redirect('/profile?success_msg=Successfully+applied+for+the+job.');
     } catch (err) {
         console.error('Error applying for job:', err);
-        req.flash('error_msg', 'Error applying for job');
-        res.redirect('/profile');
+        res.redirect('/profile?error_msg=An+error+occurred+while+applying+for+the+job.');
     }
 });
 

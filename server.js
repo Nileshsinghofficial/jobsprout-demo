@@ -1,19 +1,16 @@
 const express = require('express');
 const path = require('path');
-const flash = require('connect-flash');
-const passport = require('passport'); 
+const passport = require('passport');
 const db = require('./config/db');
-require('./config/passport'); // Ensure passport configuration is correct
+require('./config/passport');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Initialize passport and flash middleware
+// Initialize passport middleware
 app.use(passport.initialize());
-
-// Flash messages middleware
-app.use(flash());
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -21,13 +18,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Middleware to set flash messages in response locals
-app.use((req, res, next) => {
-    res.locals.success_msg = req.flash('success_msg');
-    res.locals.error_msg = req.flash('error_msg');
-    next();
-});
-
+// Route for home page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
@@ -64,8 +55,8 @@ app.get('/profile', async (req, res) => {
     const token = authHeader && authHeader.split(' ')[1];
     
     if (!token) {
-        req.flash('error_msg', 'Please log in to view this resource');
-        return res.redirect('/login');
+        res.redirect('/login');
+        return;
     }
 
     try {
@@ -75,7 +66,6 @@ app.get('/profile', async (req, res) => {
         res.render('profile', { user: decoded, jobs: result.rows });
     } catch (err) {
         console.error('Token verification error:', err);
-        req.flash('error_msg', 'Invalid or expired token');
         res.redirect('/login');
     }
 });
@@ -88,15 +78,8 @@ app.get('/jobs', async (req, res) => {
         res.render('jobs', { jobs: result.rows });
     } catch (err) {
         console.error('Error fetching jobs:', err);
-        req.flash('error_msg', 'Error fetching jobs');
         res.redirect('/');
     }
-});
-
-// API endpoint to check login status
-app.get('/api/check-login', (req, res) => {
-    // Handle token-based check here if needed
-    res.json({ loggedIn: false });
 });
 
 // Admin dashboard route
