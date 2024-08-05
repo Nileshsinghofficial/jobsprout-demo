@@ -61,47 +61,38 @@ router.post('/login', async (req, res) => {
         const result = await db.query(sql, [username]);
 
         if (result.rows.length === 0) {
-            req.flash('error_msg', 'Invalid username or password');
-            return res.redirect('/login');
+            return res.redirect('/login?error_msg=Invalid+username+or+password');
         }
 
         const user = result.rows[0];
         const match = await bcrypt.compare(password, user.password);
 
         if (!match) {
-            req.flash('error_msg', 'Invalid username or password');
-            return res.redirect('/login');
+            return res.redirect('/login?error_msg=Invalid+username+or+password');
         }
 
-        // Generate a token
-        const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token }); // Send token to client
+        const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        res.cookie('authToken', token, { httpOnly: true });
+        res.redirect('/profile?success_msg=Successfully+logged+in');
     } catch (err) {
         console.error('Login error:', err);
-        req.flash('error_msg', 'An error occurred during login');
-        res.redirect('/login');
+        res.redirect('/login?error_msg=An+error+occurred+during+login');
     }
 });
 
-// Logout route
-router.post('/logout', (req, res) => {
-    // For token-based systems, logout is handled on the client-side (remove token)
-    req.flash('success_msg', 'Logged out successfully');
-    res.redirect('/login');
-});
-
-// Route to render profile page
-router.get('/profile', async (req, res) => {
+// Profile route
+router.get('/profile', ensureAuthenticated, async (req, res) => {
     try {
         const jobsSql = 'SELECT * FROM jobs';
         const jobsResult = await db.query(jobsSql);
-        res.render('profile', { user: req.session.user, jobs: jobsResult.rows });
+        res.render('profile', { jobs: jobsResult.rows });
     } catch (err) {
         console.error('Error fetching jobs:', err);
-        req.flash('error_msg', 'Error fetching jobs');
-        res.redirect('/'); // Redirect to home or another route
+        res.redirect('/?error_msg=Error+fetching+jobs');
     }
 });
+
 
 // Logout route
 router.post('/logout', (req, res) => {

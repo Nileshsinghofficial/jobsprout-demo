@@ -3,30 +3,21 @@ const router = express.Router();
 const db = require('../config/db');
 const { ensureAuthenticated } = require('../middleware/auth');
 
-// Apply for job route
-router.post('/apply-job/:id', ensureAuthenticated, async (req, res) => {
+// Example route where redirecting to profile with success message
+router.post('/apply-job/:id', async (req, res) => {
     const jobId = req.params.id;
-    const userId = req.session.user.id;
+    const userId = req.user.id; // Assuming you're using JWT and `req.user` is populated
 
     try {
-        // Check if the user has already applied for the job
-        const checkApplicationSql = 'SELECT * FROM applications WHERE job_id = $1 AND user_id = $2';
-        const checkResult = await db.query(checkApplicationSql, [jobId, userId]);
-
-        if (checkResult.rows.length > 0) {
-            return res.redirect('/profile?error_msg=You+have+already+applied+for+this+job.');
-        }
-
-        // Insert new application
         const sql = 'INSERT INTO applications (job_id, user_id) VALUES ($1, $2)';
         await db.query(sql, [jobId, userId]);
-
-        res.redirect('/profile?success_msg=Successfully+applied+for+the+job.');
+        res.redirect('/profile?success_msg=Successfully+applied+for+the+job');
     } catch (err) {
         console.error('Error applying for job:', err);
-        res.redirect('/profile?error_msg=An+error+occurred+while+applying+for+the+job.');
+        res.redirect('/profile?error_msg=An+error+occurred+while+applying+for+the+job');
     }
 });
+
 
 // Profile page route
 router.get('/profile', ensureAuthenticated, async (req, res) => {
