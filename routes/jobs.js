@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const client = require('../config/db');
+const db = require('../config/db');
 const { ensureAuthenticated } = require('../middleware/auth');
 
 // Apply for job
@@ -13,7 +13,7 @@ router.post('/apply-job/:id', (req, res) => {
     const userId = req.session.user.id;
 
     const sql = 'INSERT INTO applications (job_id, user_id) VALUES (?, ?)';
-    client.query(sql, [jobId, userId], (err, result) => {
+    db.query(sql, [jobId, userId], (err, result) => {
         if (err) {
             req.flash('error_msg', 'Already applying this job');
             return res.redirect('/profile');
@@ -30,7 +30,7 @@ router.get('/applied-jobs', ensureAuthenticated, (req, res) => {
         JOIN jobs ON applications.job_id = jobs.id 
         WHERE applications.user_id = ?
     `;
-    client.query(sql, [userId], (err, results) => {
+    db.query(sql, [userId], (err, results) => {
         if (err) {
             req.flash('error_msg', 'Error fetching applied jobs');
             return res.redirect('/profile');

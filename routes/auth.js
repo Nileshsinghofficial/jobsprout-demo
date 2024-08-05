@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const client = require('../config/db');
+const db = require('../config/db');
 const { ensureAuthenticated } = require('../middleware/auth');
 
 // Route to render register page
@@ -21,7 +21,7 @@ router.post('/register', async (req, res) => {
     try {
         // Check if username already exists
         const checkUserSql = 'SELECT * FROM users WHERE username = ?';
-        client.query(checkUserSql, [username], async (err, results) => {
+        db.query(checkUserSql, [username], async (err, results) => {
             if (err) {
                 req.flash('error_msg', 'Error checking username availability');
                 return res.redirect('/register');
@@ -35,7 +35,7 @@ router.post('/register', async (req, res) => {
             // If username is available, hash the password and insert the new user
             const hashedPassword = await bcrypt.hash(password, 10);
             const sql = 'INSERT INTO users (username, password, checkbox) VALUES (?, ?, ?)';
-            client.query(sql, [username, hashedPassword, checkbox ? 1 : 0], (err, result) => {
+            db.query(sql, [username, hashedPassword, checkbox ? 1 : 0], (err, result) => {
                 if (err) {
                     req.flash('error_msg', 'Error registering user');
                     return res.redirect('/register');
@@ -62,7 +62,7 @@ router.get('/login', (req, res) => {
 router.post('/login', (req, res) => {
     const { username, password } = req.body;
     const sql = 'SELECT * FROM users WHERE username = ?';
-    client.query(sql, [username], async (err, results) => {
+    db.query(sql, [username], async (err, results) => {
         if (err) {
             req.flash('error_msg', 'An error occurred while querying the database');
             return res.redirect('/login');
@@ -88,7 +88,7 @@ router.post('/login', (req, res) => {
 // Route to render profile page
 router.get('/profile', ensureAuthenticated, (req, res) => {
     const jobsSql = 'SELECT * FROM jobs';
-    client.query(jobsSql, (err, jobs) => {
+    db.query(jobsSql, (err, jobs) => {
         if (err) {
             req.flash('error_msg', 'Error fetching jobs');
             return res.redirect('/'); // Redirect to home or another route

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const client = require('../config/db');
+const db = require('../config/db');
 const bcrypt = require('bcrypt');
 const { ensureAuthenticated } = require('../middleware/auth');
 
@@ -16,7 +16,7 @@ router.post('/admin-register', async (req, res) => {
     try {
         // Check if username already exists
         const checkAdminSql = 'SELECT * FROM admins WHERE username = $1';
-        const checkResult = await client.query(checkAdminSql, [username]);
+        const checkResult = await db.query(checkAdminSql, [username]);
 
         if (checkResult.rows.length > 0) {
             req.flash('error_msg', 'Username already exists');
@@ -26,7 +26,7 @@ router.post('/admin-register', async (req, res) => {
         // If username is available, hash the password and insert the new admin
         const hashedPassword = await bcrypt.hash(password, 10);
         const sql = 'INSERT INTO admins (username, password) VALUES ($1, $2)';
-        client.query(sql, [username, hashedPassword]);
+        db.query(sql, [username, hashedPassword]);
 
         req.flash('success_msg', 'Successfully registered');
         res.redirect('/admin/admin-login');
@@ -48,7 +48,7 @@ router.post('/admin-login', async (req, res) => {
 
     try {
         const sql = 'SELECT * FROM admins WHERE username = $1';
-        const result = await client.query(sql, [username]);
+        const result = await db.query(sql, [username]);
 
         if (result.rows.length === 0) {
             req.flash('error_msg', 'Invalid username or password');
@@ -76,7 +76,7 @@ router.post('/admin-login', async (req, res) => {
 router.get('/dashboard', ensureAuthenticated, async (req, res) => {
     try {
         const sql = 'SELECT * FROM jobs';
-        const result = await client.query(sql);
+        const result = await db.query(sql);
         res.render('admin-dashboard', { jobs: result.rows });
     } catch (err) {
         console.error('Error fetching jobs:', err);
@@ -90,7 +90,7 @@ router.post('/add-job', ensureAuthenticated, async (req, res) => {
     const { title, description, author } = req.body;
     try {
         const sql = 'INSERT INTO jobs (title, description, author) VALUES ($1, $2, $3)';
-        await client.query(sql, [title, description, author]);
+        await db.query(sql, [title, description, author]);
         req.flash('success_msg', 'Job added successfully');
         res.redirect('/admin/dashboard');
     } catch (err) {
@@ -105,7 +105,7 @@ router.get('/edit-job/:id', ensureAuthenticated, async (req, res) => {
     const jobId = req.params.id;
     try {
         const sql = 'SELECT * FROM jobs WHERE id = $1';
-        const result = await client.query(sql, [jobId]);
+        const result = await db.query(sql, [jobId]);
         const job = result.rows[0];
         res.render('edit-job', { job });
     } catch (err) {
@@ -120,7 +120,7 @@ router.post('/edit-job/:id', ensureAuthenticated, async (req, res) => {
     const { title, description, author } = req.body;
     try {
         const sql = 'UPDATE jobs SET title = $1, description = $2, author = $3 WHERE id = $4';
-        await client.query(sql, [title, description, author, jobId]);
+        await db.query(sql, [title, description, author, jobId]);
         req.flash('success_msg', 'Job edited successfully');
         res.redirect('/admin/dashboard');
     } catch (err) {
@@ -135,7 +135,7 @@ router.post('/delete-job/:id', ensureAuthenticated, async (req, res) => {
     const jobId = req.params.id;
     try {
         const sql = 'DELETE FROM jobs WHERE id = $1';
-        await client.query(sql, [jobId]);
+        await db.query(sql, [jobId]);
         req.flash('success_msg', 'Job deleted successfully');
         res.redirect('/admin/dashboard');
     } catch (err) {
