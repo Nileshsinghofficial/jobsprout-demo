@@ -17,11 +17,11 @@
         <button onclick="history.back()">Back</button>
     </header>
     
-    <% if (req.query.success_msg) { %>
-        <div class="alert success"><%= req.query.success_msg %></div>
+    <% if (success_msg) { %>
+        <div class="alert success"><%= success_msg %></div>
     <% } %>
-    <% if (req.query.error_msg) { %>
-        <div class="alert error"><%= req.query.error_msg %></div>
+    <% if (error_msg) { %>
+        <div class="alert error"><%= error_msg %></div>
     <% } %>
 
     <main>

@@ -1,6 +1,5 @@
 const express = require('express');
 const path = require('path');
-const flash = require('connect-flash');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const db = require('./config/db');
@@ -10,24 +9,15 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Initialize passport and flash middleware
+// Initialize passport middleware
 app.use(passport.initialize());
 
-// Flash messages middleware
-app.use(flash());
-
+// Middleware for parsing URL-encoded data
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-
-// Middleware to set flash messages in response locals
-app.use((req, res, next) => {
-    res.locals.success_msg = req.flash('success_msg');
-    res.locals.error_msg = req.flash('error_msg');
-    next();
-});
 
 // Define routes
 const authRoutes = require('./routes/auth');
